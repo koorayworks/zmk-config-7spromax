@@ -1,0 +1,13 @@
+/*
+ * 7sProMax right half (peripheral).
+ * Same local 5x8 kscan as the left half; row-offset 5 places this
+ * half at rows 5-9 of the shared 10x8 transform, mirroring the
+ * official BLE Micro Pro firmware's global matrix layout.
+ * SPDX-License-Identifier: MIT
+ */
+
+#include "7spromax.dtsi"
+
+&matrix_transform {
+    row-offset = <5>;
+};

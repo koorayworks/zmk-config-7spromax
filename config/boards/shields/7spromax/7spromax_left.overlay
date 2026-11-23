@@ -1,0 +1,8 @@
+/*
+ * 7sProMax left half (central).
+ * Uses the shared kscan/transform from 7spromax.dtsi unchanged:
+ * this half occupies rows 0-4 of the shared 10x8 transform.
+ * SPDX-License-Identifier: MIT
+ */
+
+#include "7spromax.dtsi"

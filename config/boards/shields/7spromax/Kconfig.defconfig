@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: MIT
+
+if SHIELD_7SPROMAX_LEFT
+
+config ZMK_SPLIT_ROLE_CENTRAL
+    default y
+
+endif
+
+if SHIELD_7SPROMAX_LEFT || SHIELD_7SPROMAX_RIGHT
+
+config ZMK_SPLIT
+    default y
+
+config ZMK_KEYBOARD_NAME
+    default "7sProMax"
+
+endif

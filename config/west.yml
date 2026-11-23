@@ -1,0 +1,17 @@
+manifest:
+  remotes:
+    - name: cormoran
+      url-base: https://github.com/cormoran
+
+  projects:
+    # Same ZMK fork + pinned revision as zmk-config-corne-v2-bmp's
+    # config/west.yml (DYA's v0.3 fork, API-compatible with ZMK v0.3).
+    # The Corne-specific extra modules (custom settings, jpkeys) are
+    # intentionally not included in this draft.
+    - name: zmk
+      remote: cormoran
+      revision: 4493783ef88ce2e653bf8217c92ee17140df71e3
+      import: app/west.yml
+
+  self:
+    path: config

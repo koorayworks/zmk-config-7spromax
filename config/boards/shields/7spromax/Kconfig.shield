@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MIT
+
+config SHIELD_7SPROMAX_LEFT
+    def_bool $(shields_list_contains,7spromax_left)
+
+config SHIELD_7SPROMAX_RIGHT
+    def_bool $(shields_list_contains,7spromax_right)
