@@ -2,16 +2,22 @@ manifest:
   remotes:
     - name: cormoran
       url-base: https://github.com/cormoran
+    - name: vwbugowner1976
+      url-base: https://github.com/vwbugowner1976
 
   projects:
     # Same ZMK fork + pinned revision as zmk-config-corne-v2-bmp's
     # config/west.yml (DYA's v0.3 fork, API-compatible with ZMK v0.3).
-    # The Corne-specific extra modules (custom settings, jpkeys) are
-    # intentionally not included in this draft.
     - name: zmk
       remote: cormoran
       revision: 4493783ef88ce2e653bf8217c92ee17140df71e3
       import: app/west.yml
+
+    # Custom settings + Studio RPC support, same revision as the
+    # Corne v2 BMP build. (jpkeys is intentionally still left out.)
+    - name: zmk-feature-custom-settings-v03
+      remote: vwbugowner1976
+      revision: 6e5c1cd942c5bb6ea956beeffab3e24818d2c31e
 
   self:
     path: config
