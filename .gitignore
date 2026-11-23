@@ -1,2 +1,3 @@
 build-vm/
 build-vm-out/
+build-vm-run*.log

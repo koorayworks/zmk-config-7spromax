@@ -1,0 +1,54 @@
+/*
+ * LED strip for the SuperMini nRF52840 build (nice_nano board
+ * definition; the SuperMini's connector map matches the nice!nano
+ * except D0/D1 swapped, and neither is used by the matrix).
+ *
+ * WS2812/SK6812 chain, 16 LEDs per half (same physical chain as the
+ * BMP build). Data = Pro Micro footprint position 1 (TX0) = nRF
+ * P0.06 on the SuperMini (P0.11 on the original BMP). Driven over
+ * SPIM3. Identical to ble_micro_pro.overlay except for the pin.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <dt-bindings/led/led.h>
+
+&pinctrl {
+    spromax_rgb_spi3_default: spromax_rgb_spi3_default {
+        group1 {
+            psels = <NRF_PSEL(SPIM_MOSI, 0, 6)>;
+        };
+    };
+
+    spromax_rgb_spi3_sleep: spromax_rgb_spi3_sleep {
+        group1 {
+            psels = <NRF_PSEL(SPIM_MOSI, 0, 6)>;
+            low-power-enable;
+        };
+    };
+};
+
+&spi3 {
+    compatible = "nordic,nrf-spim";
+    status = "okay";
+
+    pinctrl-0 = <&spromax_rgb_spi3_default>;
+    pinctrl-1 = <&spromax_rgb_spi3_sleep>;
+    pinctrl-names = "default", "sleep";
+
+    spromax_led_strip: ws2812@0 {
+        compatible = "worldsemi,ws2812-spi";
+        reg = <0>;
+        spi-max-frequency = <4000000>;
+        chain-length = <16>;
+        spi-one-frame = <0x70>;
+        spi-zero-frame = <0x40>;
+        color-mapping = <LED_COLOR_ID_GREEN LED_COLOR_ID_RED LED_COLOR_ID_BLUE>;
+    };
+};
+
+/ {
+    chosen {
+        zmk,underglow = &spromax_led_strip;
+    };
+};

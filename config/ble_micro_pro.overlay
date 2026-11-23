@@ -1,0 +1,55 @@
+/*
+ * LED strip for the original BLE Micro Pro build.
+ *
+ * WS2812/SK6812 chain, 16 LEDs per half. Data = BMP config pin 1 =
+ * Pro Micro footprint position 1 (TX0) = nRF P0.11 on the original
+ * BMP (see NOTES.md for the pin-conversion evidence chain).
+ * Driven over SPIM3 like the Corne v2 BMP build.
+ *
+ * The SuperMini build (nice_nano board) uses nice_nano.overlay,
+ * which is identical except for the data pin (P0.06).
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <dt-bindings/led/led.h>
+
+&pinctrl {
+    spromax_rgb_spi3_default: spromax_rgb_spi3_default {
+        group1 {
+            psels = <NRF_PSEL(SPIM_MOSI, 0, 11)>;
+        };
+    };
+
+    spromax_rgb_spi3_sleep: spromax_rgb_spi3_sleep {
+        group1 {
+            psels = <NRF_PSEL(SPIM_MOSI, 0, 11)>;
+            low-power-enable;
+        };
+    };
+};
+
+&spi3 {
+    compatible = "nordic,nrf-spim";
+    status = "okay";
+
+    pinctrl-0 = <&spromax_rgb_spi3_default>;
+    pinctrl-1 = <&spromax_rgb_spi3_sleep>;
+    pinctrl-names = "default", "sleep";
+
+    spromax_led_strip: ws2812@0 {
+        compatible = "worldsemi,ws2812-spi";
+        reg = <0>;
+        spi-max-frequency = <4000000>;
+        chain-length = <16>;
+        spi-one-frame = <0x70>;
+        spi-zero-frame = <0x40>;
+        color-mapping = <LED_COLOR_ID_GREEN LED_COLOR_ID_RED LED_COLOR_ID_BLUE>;
+    };
+};
+
+/ {
+    chosen {
+        zmk,underglow = &spromax_led_strip;
+    };
+};

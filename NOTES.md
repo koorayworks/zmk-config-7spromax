@@ -136,7 +136,7 @@ config バイナリ内のマトリクス部（オフセットは3ファイル共
 4. LED は WS2812 系で片手 16 個（config bin オフセット 3986–3987 の値 16 が
    3 ファイル共通。ソフマップ商品仕様の「LED 数 16 個」とも一致するが、片手分か全体かは不明）。
    LED ピンは BMP config 番号 1（LPME エミュレータ調査、右手側の記述）。
-   このドラフトでは LED は未実装。
+   → 2026-11-24 に実装・ビルド確認済み（§11）。
 
 ## 8. 未確認事項
 
@@ -144,6 +144,8 @@ config バイナリ内のマトリクス部（オフセットは3ファイル共
    （Google Drive 配布）や Remap 定義を入手できれば事前に確定できるが、未入手。
    現行ドラフトのトランスフォームは「行優先の素直な並び」で、実キーの位置とは一致しない前提。
    テストキーマップで全ポジション異なるキーを割り当ててあるので、実機で押して対応表を作る。
+   → 2026-11-23/24 に実機で全 80 ポジション確定済み（MAPPING.md）。想定どおりの
+   行優先で、行列の入れ替わりなし。
 2. タクトスイッチ 3 個/半分の (row, col)（上記 1 に含む）。
 3. ZMK kscan の diode-direction / GPIO フラグが実機でそのまま通るか
    （初回起動確認ポイント。反応しない・ゴーストが出る場合はここを見直す）。
@@ -152,6 +154,7 @@ config バイナリ内のマトリクス部（オフセットは3ファイル共
    （USB 給電前提。Corne 用ボード定義にも電池分圧の定義はない）。
 5. ZMK Studio 対応: 土台の DYA フォークは Studio 拡張を含むが、このドラフトの west.yml では
    Corne 用の custom-settings モジュールを外したため、Studio 連携は未検証・未設定。
+   → 2026-11-24 に実装・ビルド確認済み（§11）。実機での Studio 接続確認は未実施。
 6. config bin の未解釈フィールド（オフセット 3912 = 8、3913 = 1、3980 の役割値、
    3981 以降の LED 相当領域）。マトリクス定義には影響しない見込みだが未解釈のまま記録する。
 
@@ -173,3 +176,55 @@ config バイナリ内のマトリクス部（オフセットは3ファイル共
 - Salicylic-acid3 7sProMax インタレストチェック記事（エクストラスイッチの構造・用途）
 - `~/workspace/7spromax-case/design/board_reference.md`（穴数・タクト位置の実測）
 - `koorayworks/zmk-config-corne-v2-bmp`（ボード定義・west.yml の土台）
+
+## 11. 本番キーマップ / LED / Studio / SuperMini 版（2026-11-24 実装・VM ビルド確認済み）
+
+実機確認は未実施（本人の PC がオフの間に VM でビルド確認のみ）。焼き込みは次回セッション。
+
+### 実装内容
+- 本番キーマップ（HHKB 風、ドッキング状態）: `config/7spromax.keymap`。
+  Fn 層に Studio 解錠・BT 切替・bootloader / sys_reset。タクトは左 = RGB_TOG /
+  音量− / 音量+、右 = 明るさ− / 明るさ+ / エフェクト切替。
+- LED: 標準アンダーグロー、SPIM3 駆動、GRB、片手 16 個。データピンは
+  モジュール依存のため strip 定義をボード別 overlay へ分離
+  （BMP: `config/ble_micro_pro.overlay` = P0.11 / SuperMini:
+  `config/nice_nano.overlay` = P0.06）。生成 DTS で psel を照合済み
+  （BMP 0x5000b / SM 0x50006）。
+- Studio: 左（central）のみ snippet `studio-rpc-usb-uart` + custom-settings
+  モジュール（west.yml に追加）。`CONFIG_ZMK_STUDIO_LOCKING=n` で起動直後から使用可。
+
+### ビルドで踏んだ制約（再発防止メモ）
+- `CONFIG_ZMK_RGB_UNDERGLOW_EXT_POWER` は既定 y。ext-power ノードが無い基板では
+  rgb_underglow.c が存在しないデバイスを参照してコンパイルエラーになる。
+  電源スイッチピンの無い両モジュール向けに `7spromax.conf` で `=n` にした。
+- Studio 有効ビルドは物理レイアウト必須（physical_layouts.c の BUILD_ASSERT）。
+  chosen の `zmk,matrix-transform` を外し、`zmk,physical-layout` +
+  layout 側 `transform = <&matrix_transform>` に移行（7spromax.dtsi）。
+  layout の座標は表示用の近似（タクトは独立行、2u は未確定のため全キー 1x1）。
+- config 直下の `<board>.overlay` / `<board>.conf` は ZMK ビルドが拾う
+  （ログの "Found devicetree overlay" で確認）。overlay 内で LED_COLOR_ID_* を
+  使う場合は `#include <dt-bindings/led/led.h>` が要る（キーマップ側の
+  include は効かない）。
+- VM ビルド環境の注意: ninja は venv に pip で入れる（ランタイム再起動で
+  システム側が消える）。nanopb の protoc 生成には pkg_resources が要るため
+  `setuptools<81` を venv に入れる。
+
+### SuperMini 版（nice_nano 流用）
+- この ZMK ツリーに promicro_nrf52840 ボード定義は無い。SuperMini の
+  コネクタ対応表は nice!nano と D0/D1 以外一致し、その 2 ピンはマトリクスに
+  使わないため、ボード定義は `nice_nano` をそのまま使う。
+- D16 = P0.10（NFC ピン）が列線のため `config/nice_nano.conf` で
+  `CONFIG_NFCT_PINS_AS_GPIOS=y`（.config への反映を確認済み）。
+- 電池 % は SuperMini 側の分圧回路の有無が不明なため未検証
+  （nice_nano 定義の vbatt がそのまま入る。実機で要確認）。
+
+### ビルド結果（VM, Zephyr SDK 0.17.0、ZBook の 0.16.3 とは別系統）
+`build-vm-out/` に 5 本（いずれもエラー 0）:
+- `7spromax-settings-reset.uf2` / `7spromax-left.uf2` / `7spromax-right.uf2`
+- `7spromax-sm-left.uf2` / `7spromax-sm-right.uf2`
+
+### 残る未確認（実機）
+- LED のピン・個数の実物確認（光るか、16 個で足りるか）。
+- 左タクトの物理順（(0,7) を外側と仮定して割当済み。逆なら入れ替え）。
+- 下段 2u キーの位置（(4,3) に SPACE、(4,2) に LGUI と仮定。逆なら入れ替え）。
+- SuperMini の実機適合（B+/B− の位置、電池 %、NFC→GPIO の実効）。
